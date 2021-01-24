@@ -1,4 +1,4 @@
-def get_palce_master():
+def get_place_master():
     place_dict={"01":"kiryu"
                 ,"02":"toda"
                 ,"03":"edogawa"
@@ -25,7 +25,7 @@ def get_palce_master():
                 ,"24":"omura"}
     return place_dict
 
-def get_palce_num_master():
+def get_place_num_master():
     place_num_dict={1:"kiryu"
                 ,2:"toda"
                 ,3:"edogawa"
