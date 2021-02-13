@@ -200,16 +200,13 @@ def data_making_1_0(df):
         for column, val in boat_dummie_df.iteritems():
               result_df_dummie['{}_{}'.format(col,int(column))]=val
         result_df_dummie=result_df_dummie.drop('{}'.format(col),axis=1)
-    result_df=result_df_dummie
-
-
 
     #クラスタリング
     #分けてみるクラスタの数は[8,10]の2個
     #cluster_target_df　　trainのデータからリザルトと配当金を取り除いたもの
     target_num_cluster=[8,10]
     #test_clustaring_df=train_has_PCA_df
-    clustar_target_df=result_df
+    clustar_target_df=result_df_dummie
     clustaring_df=clustar_target_df
     """
     for num_cluster in target_num_cluster:
