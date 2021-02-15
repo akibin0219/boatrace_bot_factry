@@ -11,6 +11,7 @@ from sklearn.model_selection import train_test_split
 import pickle
 # 機械学習用
 from sklearn.cluster import KMeans #クラスタリング用
+from sklearn.decomposition import PCA  #次元削減用
 from sklearn.ensemble import RandomForestClassifier#ランダムフォレスト
 from copy import deepcopy as cp
 from sklearn.linear_model import LogisticRegression
@@ -411,6 +412,116 @@ def data_making_1_0(df):
     """
     model_df=clustaring_df
     model_df=trans_date_type(model_df)
+    return model_df
+#====================================================================================================================================================================================================
+#====================================================================================================================================================================================================
+#====================================================================================================================================================================================================
+
+
+
+
+#バージョン1_1、()データ切り抜き関数配当金、着の情報は切りぬかなくてもうまいことやってくれる。===============================================================================================================
+#====================================================================================================================================================================================================
+#====================================================================================================================================================================================================
+#train_{}のscvを突っ込むと以下の加工をする
+#dateをけして、yearを追加
+#各変数のダミー化
+#学習データからクラスタリングラベル、次元削減の付与,
+#また、ボート番号、モータ番号を消す。
+
+def data_making_1_1(df):
+
+    result_df=df
+    result_df=result_df.drop(["racer_1_ID","racer_2_ID","racer_3_ID","racer_4_ID","racer_5_ID","racer_6_ID",],axis=1)#IDはいらないので削除
+    result_df=result_df.replace(0.0000,{"racer_1_ave_st_time":0.22})#新人のave_st_timeを0.22に
+    result_df=result_df.replace(0.0000,{"racer_2_ave_st_time":0.22})
+    result_df=result_df.replace(0.0000,{"racer_3_ave_st_time":0.22})
+    result_df=result_df.replace(0.0000,{"racer_4_ave_st_time":0.22})
+    result_df=result_df.replace(0.0000,{"racer_5_ave_st_time":0.22})
+    result_df=result_df.replace(0.0000,{"racer_6_ave_st_time":0.22})
+    result_df=result_df.replace(0.0000,{"racer_1_doub_win":0.02})#新人の着に絡む確率ave_st_timeを0.02に(新人の半期の偏差から導出)
+    result_df=result_df.replace(0.0000,{"racer_2_doub_win":0.02})
+    result_df=result_df.replace(0.0000,{"racer_3_doub_win":0.02})
+    result_df=result_df.replace(0.0000,{"racer_4_doub_win":0.02})
+    result_df=result_df.replace(0.0000,{"racer_5_doub_win":0.02})
+    result_df=result_df.replace(0.0000,{"racer_6_doub_win":0.02})
+    #ダミー変数化
+    result_df_dummie=result_df
+    race_dummie_df=pd.get_dummies(result_df_dummie['number_race'])#number_raceをダミー化
+    for column, val in race_dummie_df.iteritems():
+        result_df_dummie['race_{}'.format(int(column))]=val
+    result_df_dummie=result_df_dummie.drop('number_race',axis=1)
+
+    cols=list(result_df_dummie.columns)
+    male_cols=[s for s in cols if 'male' in s]#性別を示すカラムを取り出す
+
+    #===========================新規、性別の取り出し機能が良くなかったため作り直す
+    empty_arr=[0]*len(result_df_dummie)
+    for col in male_cols:
+        for number in np.arange(0,2,1):
+              result_df_dummie['{}_{}'.format(col,int(number))]=empty_arr
+        male_dummie_df=pd.get_dummies(result_df_dummie[col])#性別をダミー化
+        for column, val in male_dummie_df.iteritems():
+              result_df_dummie['{}_{}'.format(col,int(column))]=val
+        result_df_dummie=result_df_dummie.drop('{}'.format(col),axis=1)
+
+    cols=list(result_df_dummie.columns)
+
+
+
+    moter_cols=[s for s in cols if '_mo' in s]#モーター番号を示すカラムを取り出す
+    boat_cols=[s for s in cols if '_bo' in s]#ボート番号を示すカラムを取り出す
+
+    #boat、moterの情報は使わない、
+    numbers=np.arange(1, 100, 1)
+    empty_arr=[0]*len(result_df_dummie)
+    for col in moter_cols:
+        result_df_dummie=result_df_dummie.drop('{}'.format(col),axis=1)
+    for col in boat_cols:
+        result_df_dummie=result_df_dummie.drop('{}'.format(col),axis=1)
+
+    #クラスタリング
+    #分けてみるクラスタの数は[3,5,7,9]の4個
+    #cluster_target_df　　trainのデータからリザルトと配当金を取り除いたもの
+    #学習データのdateを年に変換
+    result_df_dummie['date']=pd.to_datetime(result_df_dummie['date'])#日付が文字列なのでdateを日付型に変換
+    result_df_dummie['year']=result_df_dummie['date'].dt.year
+
+    #クラスタリングに邪魔だから消したいけど、後々使うものはいったんよけておく
+    result=result_df_dummie['result_com'].values#
+    money=result_df_dummie['money'].values#
+    years=result_df_dummie['year'].values#
+
+    #安全なところに移したら削除する
+    result_df_dummie=result_df_dummie.drop('result_com',axis=1)
+    result_df_dummie=result_df_dummie.drop('money',axis=1)
+    result_df_dummie=result_df_dummie.drop('date',axis=1)
+
+    #クラアスタリング用の学習、予測用のデータの切り分け
+    clustar_test_df = result_df_dummie[(result_df_dummie['year']==2019) | ((result_df_dummie['year']==2020) )].copy()#2019,2020のデータを検証用データに。
+    clustar_train_df =  result_df_dummie[(result_df_dummie['year']!=2019) & ((result_df_dummie['year']!=2020) )].copy()#そのほかを学習データに
+
+    #年の情報だけ切り分けに使ったからここで消す。
+    clustar_test_df=clustar_test_df.drop('year',axis=1)
+    clustar_train_df=clustar_train_df.drop('year',axis=1)
+
+    target_num_cluster=[3,5,7,9]
+    for num_cluster in target_num_cluster:
+        Km = KMeans(random_state=7,n_clusters=num_cluster).fit(clustar_train_df)#rondom_stateはラッキーセブン
+        train_pred = Km.predict(clustar_train_df)#rondom_stateはラッキーセブン
+        test_pred =Km.predict(clustar_test_df)#rondom_stateはラッキーセブン
+        #Km=========================実査に使うときはこれのモデルを会場ごとに保存して使用。
+
+        clustar_train_df['num={}'.format(num_cluster)]=train_pred
+        clustar_test_df['num={}'.format(num_cluster)]=test_pred
+
+    #結合して元の形に戻す。
+    clustar_df=pd.concat([clustar_train_df, clustar_test_df])
+    clustar_df['year']=years
+    clustar_df['money']=money
+    clustar_df['result_com']=result
+
+    model_df=clustar_df
     return model_df
 #====================================================================================================================================================================================================
 #====================================================================================================================================================================================================
