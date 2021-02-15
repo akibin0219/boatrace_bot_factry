@@ -7,6 +7,7 @@ import seaborn
 from pandas import DataFrame
 from tqdm import tqdm
 from imblearn.under_sampling import RandomUnderSampler #アンダーサンプリング用
+from sklearn.model_selection import train_test_split
 import pickle
 # 機械学習用
 from sklearn.cluster import KMeans #クラスタリング用
@@ -20,6 +21,7 @@ import time
 import datetime
 import os #ディレクトリ作成用
 import xgboost as xgb
+import sys
 pd.set_option('display.width',400)#勝手に改行コードを入れられるのを防ぐ
 
 #バージョンとは関係のない、データの加工関数内で使う関数====================================================================================================================================================================================================
@@ -126,10 +128,42 @@ def get_event_info(df):
     return df
 
 #モデルのパラメータ探索関数(XGboost)
-def making_model_score(place_name,df):#学習データと場所名を渡せば探索を初めて、指定のディレクトリにスコアをまとめたcsvを出力する。
+def making_model_score(version,place_name,result_df):#学習データと場所名を渡せば探索を初めて、指定のディレクトリにスコアをまとめたcsvを出力する。
+    print(place_name)
+    #result_dfは加工関数にて分けられたものを渡す。
     model_score_df=pd.DataFrame(columns=['target_com','depth','target_per','総収益', '投資金額','出現数','購買予測数','利益率','購買的中率','的中数'])#スコアを格納するdf
-    for result_com_number in result_com_df['result_com'].values:
-        print(result_com_number)
+
+    #学習データの切り分け
+    test_df = result_df[(result_df['year']==2019) | ((result_df['year']==2020) )]#2019,2020のデータを検証用データに。
+    train_df =  result_df[(result_df['year']!=2019) & ((result_df['year']!=2020) )]#そのほかを学習データに
+    #学習データを切り分けたらyearはいらないから削除する
+    test_df=test_df.drop(['year'],axis=1)
+    train_df=train_df.drop(['year'],axis=1)
+
+    train_money=pd.Series(train_df['money'])
+    test_money=pd.Series(test_df['money'])
+
+    #x,yへの切り分け
+    #出現数の分布
+    result_com_s=test_df['result_com'].value_counts()
+    result_com_s=result_com_s.sort_index()
+    gain_mean=test_df.groupby('result_com')['money'].mean()
+    gain_mean=gain_mean.sort_index()
+
+    gain_median=test_df.groupby('result_com')['money'].median()
+    gain_median=gain_median.sort_index()
+    result_com_df=pd.DataFrame({'result_com':result_com_s.index,
+                                'result_com_num':result_com_s.values,
+                                'result_com_per':result_com_s.values/sum(result_com_s.values)*100,
+                                'gain_mean':gain_mean.values,
+                                'gain_median':gain_median.values,})
+    result_com_df=result_com_df.iloc[0:28]#探索的に探すにも最後のほうは役にモデルなのはわかっているため
+
+
+
+
+    for result_com_number in tqdm(result_com_df['result_com'].values):
+        #print(result_com_number)
         result_com=result_com_number
         #result_comごとの閾値の決定========================================================================
         #print(result_com_number)
@@ -169,7 +203,7 @@ def making_model_score(place_name,df):#学習データと場所名を渡せば�
         result_test_df['money']=test_money
         #学習データラベル変換終わり============================================
 
-        for_arr=np.arange(1,60)
+        for_arr=np.arange(1,73)
         #for_arr=np.arange(1,100,1)
         accuracy_arr=[0]*len(for_arr)
         target_per_arr=[0]*len(for_arr)
@@ -180,11 +214,11 @@ def making_model_score(place_name,df):#学習データと場所名を渡せば�
         #depths_arr=[4,5,6,7,8]
         depths_arr=[5,6,8]
         for depth in depths_arr:
-            for sum_target_per in tqdm(for_arr):
+            for sum_target_per in for_arr:
 
                 index=sum_target_per-1
                 #target_per=50+sum_target_per
-                target_per=80+(sum_target_per*2)
+                target_per=80+(sum_target_per*3)
                 target_per_arr[index]=target_per
 
                 #モデルの評価指標値を格納するseries======================
@@ -224,7 +258,6 @@ def making_model_score(place_name,df):#学習データと場所名を渡せば�
                 param = {'max_depth': depth, #パラメータの設定
                          'eta': 0.5,
                          #'eta': 0.2,
-                         #'objective': 'binary:logistic',
                          'objective': 'binary:hinge',
                          'eval_metric': 'logloss',
                          'verbosity':0,
@@ -236,7 +269,7 @@ def making_model_score(place_name,df):#学習データと場所名を渡せば�
                 evallist = [(valid, 'eval'), (train, 'train')]#学習時にバリデーションを監視するデータの指定。
                 #bst = xgb.train(param, train,num_boost_round=1000,early_stopping_rounds=30)
                 num_round = 10000
-                bst = xgb.train(param, train,num_round,evallist, early_stopping_rounds=30)
+                bst = xgb.train(param, train,num_round,evallist, early_stopping_rounds=30, verbose_eval=0 )
                 #RF = RandomForestClassifier(random_state=1,n_estimators=1000,max_depth=depth)
                 #RF = RF.fit(target_x_train,target_y_train)
 
@@ -282,9 +315,11 @@ def making_model_score(place_name,df):#学習データと場所名を渡せば�
 
 
     #モデルの「スコアを保存
-    score_dir_path = "../../bot_database/{place_name}/model_score_{place_name}/{place_name}_model_score.csv".format(place_name=place_name)#作成したデータの書き込み先#使用するデータの読み込み
-    model_score_df.to_csv(score_dir_path, encoding='utf_8_sig')
+    #model_score_df.to_csv('{}_model_score.csv'.format(place), encoding='utf_8_sig')
+    dir_path = "../../bot_database/{place_name}/model_score_{place_name}/{place_name}_model_score_{V}.csv".format(place_name=place_name,V=version)#作成したデータの書き込み先#使用するデータの読み込み
+    model_score_df.to_csv(dir_path, encoding='utf_8_sig')
     return None
+
 
 #====================================================================================================================================================================================================
 #====================================================================================================================================================================================================
