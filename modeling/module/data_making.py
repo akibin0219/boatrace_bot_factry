@@ -358,7 +358,7 @@ def model_score_XGboost(version,place_name,result_df):#学習データと場所�
 def model_score_XGboost_th(version,place_name,result_df):#XGboostの出力を確率のやつを使用したバージョン、閾値の探索も行う。
     print(place_name)
     #result_dfは加工関数にて分けられたものを渡す。
-    model_score_df=pd.DataFrame(columns=['target_com','depth','target_per','総収益', '投資金額','出現数','購買予測数','利益率','購買的中率','的中数'])#スコアを格納するdf
+    model_score_df=pd.DataFrame(columns=['target_com','depth','target_per','threshold','総収益', '投資金額','出現数','購買予測数','利益率','購買的中率','的中数'])#スコアを格納するdf
 
     #学習データの切り分け
     test_df = result_df[(result_df['year']==2019) | ((result_df['year']==2020) )]#2019,2020のデータを検証用データに。
@@ -430,7 +430,7 @@ def model_score_XGboost_th(version,place_name,result_df):#XGboostの出力を確
         result_test_df['money']=test_money
         #学習データラベル変換終わり============================================
 
-        for_arr=np.arange(1,73)
+        for_arr=np.arange(1,100)
         #for_arr=np.arange(1,100,1)
         accuracy_arr=[0]*len(for_arr)
         target_per_arr=[0]*len(for_arr)
@@ -445,11 +445,11 @@ def model_score_XGboost_th(version,place_name,result_df):#XGboostの出力を確
 
                 index=sum_target_per-1
                 #target_per=50+sum_target_per
-                target_per=80+(sum_target_per*3)
+                target_per=100+(sum_target_per*2)
                 target_per_arr[index]=target_per
 
                 #モデルの評価指標値を格納するseries======================
-                model_score_s=pd.Series(index=['target_com','depth','target_per','総収益', '投資金額','出現数','購買予測数','利益率','購買的中率','的中数'], dtype='float64')
+                model_score_s=pd.Series(index=['target_com','depth','target_per','threshold','総収益', '投資金額','出現数','購買予測数','利益率','購買的中率','的中数'], dtype='float64')
                 model_score_s['target_com']=result_com#目標としているresult_comラベル番号
                 model_score_s['depth']=depth#ハイパーパラメータ＿木の深さ
                 model_score_s['target_per']=target_per#学習データ_1に対してどの程度の0のデータを持たせるか。
@@ -517,7 +517,7 @@ def model_score_XGboost_th(version,place_name,result_df):#XGboostの出力を確
 
                 #th_arr=[0.1,0.3,0.5,0.6,0.7,0.8,0.9]
                 #th_arr=[0.01,0.03,0.05,0.07,0.9,0.1,0.13]#探索結果待ち、、、、、
-                th_arr=[0.85,0.87,0.9,0.92,0.95]
+                th_arr=[0.85,0.9,0.92]
                 for th in th_arr:
                     trans_df=pred_th_trans(pred_test_df,th)
                     num_1=len(trans_df[trans_df['test']==1])
