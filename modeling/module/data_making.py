@@ -430,7 +430,7 @@ def model_score_XGboost_th(version,place_name,result_df):#XGboostの出力を確
         result_test_df['money']=test_money
         #学習データラベル変換終わり============================================
 
-        for_arr=np.arange(1,100)
+        for_arr=np.arange(1,85)
         #for_arr=np.arange(1,100,1)
         accuracy_arr=[0]*len(for_arr)
         target_per_arr=[0]*len(for_arr)
@@ -439,7 +439,8 @@ def model_score_XGboost_th(version,place_name,result_df):#XGboostの出力を確
         model_gain_arr=[0]*len(result_test_df)
         test_gain_arr=test_money.values
         #depths_arr=[4,5,6,7,8]
-        depths_arr=[5,6,8]
+        #depths_arr=[5,6,8]
+        depths_arr=[5,8]
         for depth in depths_arr:
             for sum_target_per in for_arr:
 
@@ -483,21 +484,26 @@ def model_score_XGboost_th(version,place_name,result_df):#XGboostの出力を確
 
                 #xgb.config_context(verbosity=0)
                 param = {'max_depth': depth, #パラメータの設定
-                         'eta': 0.5,
-                         #'eta': 0.2,
-                         #'objective': 'binary:hinge',
-                         'objective': 'binary:logistic',#確率で出力
-                         'eval_metric': 'logloss',
-                         'verbosity':0,
-                         'subsample':0.8,
-                         'nthread':10,
-                         'gpu_id':0,
-                         'tree_method':'gpu_hist'
-                        }
+                                 #'eta': 1.8,
+                                 #'eta': 0.8,
+                                 'eta': 1.3,
+                                 #'eta': 0.2,
+                                 #'objective': 'binary:hinge',
+                                 'objective': 'binary:logistic',#確率で出力
+                                 'eval_metric': 'logloss',
+                                 'verbosity':0,
+                                 'subsample':0.8,
+                                 'nthread':10,
+                                 'gpu_id':0,
+                                 'seed':7,
+                                 'tree_method':'gpu_hist'
+                                }
                 evallist = [(valid, 'eval'), (train, 'train')]#学習時にバリデーションを監視するデータの指定。
                 #bst = xgb.train(param, train,num_boost_round=1000,early_stopping_rounds=30)
-                num_round = 10000
+                #num_round = 10000
+                num_round = 400
                 bst = xgb.train(param, train,num_round,evallist, early_stopping_rounds=30, verbose_eval=0 )
+                #bst = xgb.train(param, train,num_round,evallist, verbose=100,early_stopping_rounds=30 )
                 #RF = RandomForestClassifier(random_state=1,n_estimators=1000,max_depth=depth)
                 #RF = RF.fit(target_x_train,target_y_train)
 
@@ -981,6 +987,6 @@ def version_2_0(version,place_name,base_df):
     model_score_rondom_forest(version,place_name,result_df)
 
 
-def version_2_1(version,place_name,base_df):
+def version_2_1(version,place_name,base_df):#閾値で予測を変えるバージョン
     result_df=data_making_clustar(base_df)
     model_score_XGboost_th(version,place_name,result_df)#閾値を決めて変換するver
