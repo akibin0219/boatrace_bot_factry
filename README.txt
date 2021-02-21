@@ -12,5 +12,9 @@ modeling/  :モデリングを行うスクリプトのまとめフォルダ、�
 
 
 HTML_data.ipynb:全会場の競争データをクローリングで取得し出力(.txt)
+
 trans_text_code.ipynb:HTMLの文字コードを変換するスクリプト
+
 making_traindata.ipynb:HTMLから情報を抜き出してCSVに保存、さらにパラメータの情報を結合してtrainのデータとして出力（databaseに出力）
+
+model_analysis.ipynb:XGboost の予測を閾値で区切ったものの中で成績がいいモデルを探し、pickleで保存、加えてもでるが正常かどうかチェックするcsvを出力するスクリプト
