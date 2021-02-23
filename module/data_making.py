@@ -23,6 +23,15 @@ import datetime
 import os #ディレクトリ作成用
 import xgboost as xgb
 import sys
+
+#自作のモジュールのインポート
+import module.master as master
+import module.graph as graph
+import module.trans_text_code as trans
+#import data_making as making
+import module.model_analysis as analysis
+
+
 pd.set_option('display.width',400)#勝手に改行コードを入れられるのを防ぐ
 
 #バージョンとは関係のない、データの加工関数内で使う関数====================================================================================================================================================================================================
@@ -932,7 +941,7 @@ def data_making_clustar(df):#クラスタリングあり、モータ番号、艇
     clustar_test_df=clustar_test_df.drop('year',axis=1)
     clustar_train_df=clustar_train_df.drop('year',axis=1)
 
-    target_num_cluster=[3,5,7,9]
+    target_num_cluster=[3,5,7,9]#分けるクラスタ数によってモデルの名前を変える
     for num_cluster in target_num_cluster:
         Km = KMeans(random_state=7,n_clusters=num_cluster).fit(clustar_train_df)#rondom_stateはラッキーセブン
         train_pred = Km.predict(clustar_train_df)#rondom_stateはラッキーセブン
