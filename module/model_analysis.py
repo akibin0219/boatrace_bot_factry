@@ -531,8 +531,6 @@ def ym_analysis_rondom(result_base_df,use_model_df,place_name,version,year):
     #print(month_graph_df['sum'].sum())
 
 def save_clustar_model(result_base_df,place_name,version):#クラスタリングあり、モータ番号、艇番号なし
-
-
     result_df=result_base_df
     result_df=result_df.drop(["racer_1_ID","racer_2_ID","racer_3_ID","racer_4_ID","racer_5_ID","racer_6_ID",],axis=1)#IDはいらないので削除
     result_df=result_df.replace(0.0000,{"racer_1_ave_st_time":0.22})#新人のave_st_timeを0.22に
@@ -620,8 +618,6 @@ def save_clustar_model(result_base_df,place_name,version):#クラスタリング
 
 
 def data_making_clustar_pickle(df,place_name,version):#クラスタリングあり、モータ番号、艇番号なし,oickleのを読み込む
-
-
     result_df=df
     result_df=result_df.drop(["racer_1_ID","racer_2_ID","racer_3_ID","racer_4_ID","racer_5_ID","racer_6_ID",],axis=1)#IDはいらないので削除
     result_df=result_df.replace(0.0000,{"racer_1_ave_st_time":0.22})#新人のave_st_timeを0.22に
