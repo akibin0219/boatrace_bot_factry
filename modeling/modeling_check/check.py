@@ -3,6 +3,7 @@
 #以下pickle版================================================================================================
 #以下pickle版================================================================================================
 def pickle_check_V2_1_2(result_base_df,use_model_df,place_name,version):#pickleを使った時の予測内容のチェックをする
+def pickle_check_V2_1_2(result_base_df,use_model_df,place_name,version):#pickleを使った時の予測内容のチェックをする
     print(place_name)
 
     #==============================================================================
@@ -85,7 +86,8 @@ def pickle_check_V2_1_2(result_base_df,use_model_df,place_name,version):#pickle�
         #XGboostのデータ型に変換する
         train = xgb.DMatrix(train_x, label=train_y)#学習用
         valid = xgb.DMatrix(valid_x, label=valid_y)#学習時のロス修正用
-        test = xgb.DMatrix(target_x_test, label=target_y_test)#実際に使った時の利益率の算出用
+        #test = xgb.DMatrix(target_x_test, label=target_y_test)#実際に使った時の利益率の算出用
+        test = xgb.DMatrix(target_x_test)#実際に使った時の利益率の算出用
     #     #xgb.config_context(verbosity=0)
     #     param = {'max_depth': depth, #パラメータの設定
     #                      #'eta': 1.8,
@@ -129,6 +131,8 @@ def pickle_check_V2_1_2(result_base_df,use_model_df,place_name,version):#pickle�
         #収益計算部分======================================
         #追加　配当金の情報も考慮する。
         result_gain_base_df=calc_gain(trans_df)
+        dir_path = "check_csv/{place_name}/pred/check_pred_pickle_{place_name}_model_score_{V}.csv".format(place_name=place_name,V=version)#作成したデータの書き込み先#使用するデータの読み込み
+        result_gain_base_df.to_csv(dir_path, encoding='utf_8_sig')
 
         pred_concat_df[result_com]=trans_df['trans_result'].values#組の予測を結合
 
@@ -152,8 +156,6 @@ def pickle_check_V2_1_2(result_base_df,use_model_df,place_name,version):#pickle�
     pred_concat_df.to_csv(dir_path, encoding='utf_8_sig')
 
     return None
-
-
 
 
 #以下train版================================================================================================
@@ -326,6 +328,9 @@ def train_check_V2_1_2(result_base_df,use_model_df,place_name,version):
         #収益計算部分======================================
         #追加　配当金の情報も考慮する。
         result_gain_base_df=calc_gain(trans_df)
+
+        dir_path = "check_csv/{place_name}/pred/check_pred_train_{place_name}_model_score_{V}.csv".format(place_name=place_name,V=version)#作成したデータの書き込み先#使用するデータの読み込み
+        result_gain_base_df.to_csv(dir_path, encoding='utf_8_sig')
 
         pred_concat_df[result_com]=trans_df['trans_result'].values#組の予測を結合
 
