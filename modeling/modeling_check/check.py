@@ -3,7 +3,6 @@
 #以下pickle版================================================================================================
 #以下pickle版================================================================================================
 def pickle_check_V2_1_2(result_base_df,use_model_df,place_name,version):#pickleを使った時の予測内容のチェックをする
-def pickle_check_V2_1_2(result_base_df,use_model_df,place_name,version):#pickleを使った時の予測内容のチェックをする
     print(place_name)
 
     #==============================================================================
@@ -14,8 +13,8 @@ def pickle_check_V2_1_2(result_base_df,use_model_df,place_name,version):#pickle�
     model_score_df=pd.DataFrame(columns=['target_com','depth','target_per','threshold','総収益', '投資金額','出現数','購買予測数','利益率','購買的中率','的中数'])#スコアを格納するdf
 
     #学習データの切り分け
-    test_df = result_df[(result_df['year']==2019) | ((result_df['year']==2020) )]#2019,2020のデータを検証用データに。
-    train_df =  result_df[(result_df['year']!=2019) & ((result_df['year']!=2020) )]#そのほかを学習データに
+    test_df = result_df[(result_df['year']==2018) | ((result_df['year']==2019) )].copy()#2019,2020のデータを検証用データに。
+    train_df =  result_df[(result_df['year']!=2018) & ((result_df['year']!=2019) )].copy()#そのほかを学習データに
     pred_concat_df=pd.DataFrame(columns=use_model_df['target_com'].values,index=test_df.index)#予測データをまとめて持つdf
     #学習データを切り分けたらyearはいらないから削除する
     test_df=test_df.drop(['year'],axis=1)
@@ -64,7 +63,9 @@ def pickle_check_V2_1_2(result_base_df,use_model_df,place_name,version):#pickle�
         #trainの[0]に対して、target_perの割合の量[1]を持った学習データの作成
         # 一層目の判別機のtrainデータ　:terget_result_df
         target_df=result_train_df#ベースのデータフレームをコピー
-        target_df=target_df.sample(frac=1,random_state=7)#シャッフル、時系列の偏りを無くす
+
+        #target_df=target_df.sample(frac=1,random_state=7)#シャッフル、時系列の偏りを無くす
+
         target_1_df=target_df[target_df['result_com']==1]
         len_1=len(target_1_df)
         target_0_df=target_df[target_df['result_com']==0]
@@ -162,6 +163,7 @@ def pickle_check_V2_1_2(result_base_df,use_model_df,place_name,version):#pickle�
 #以下train版================================================================================================
 #以下train版================================================================================================
 #以下train版================================================================================================
+
 def train_check_V2_1_2(result_base_df,use_model_df,place_name,version):
     #探査結果から学習したモデルを保存する関数、
     print(place_name)
@@ -173,8 +175,8 @@ def train_check_V2_1_2(result_base_df,use_model_df,place_name,version):
     model_score_df=pd.DataFrame(columns=['target_com','depth','target_per','threshold','総収益', '投資金額','出現数','購買予測数','利益率','購買的中率','的中数'])#スコアを格納するdf
 
     #学習データの切り分け
-    test_df = result_df[(result_df['year']==2019) | ((result_df['year']==2020) )]#2019,2020のデータを検証用データに。
-    train_df =  result_df[(result_df['year']!=2019) & ((result_df['year']!=2020) )]#そのほかを学習データに
+    test_df = result_df[(result_df['year']==2018) | ((result_df['year']==2019) )].copy()#2019,2020のデータを検証用データに。
+    train_df =  result_df[(result_df['year']!=2018) & ((result_df['year']!=2019) )].copy()#そのほかを学習データに
     pred_concat_df=pd.DataFrame(columns=use_model_df['target_com'].values,index=test_df.index)#予測データをまとめて持つdf
     #学習データを切り分けたらyearはいらないから削除する
     test_df=test_df.drop(['year'],axis=1)
@@ -263,7 +265,9 @@ def train_check_V2_1_2(result_base_df,use_model_df,place_name,version):
         #trainの[0]に対して、target_perの割合の量[1]を持った学習データの作成
         # 一層目の判別機のtrainデータ　:terget_result_df
         target_df=result_train_df#ベースのデータフレームをコピー
-        target_df=target_df.sample(frac=1,random_state=7)#シャッフル、時系列の偏りを無くす
+
+        #target_df=target_df.sample(frac=1,random_state=7)#シャッフル、時系列の偏りを無くす
+
         target_1_df=target_df[target_df['result_com']==1]
         len_1=len(target_1_df)
         target_0_df=target_df[target_df['result_com']==0]
