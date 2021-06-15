@@ -200,7 +200,7 @@ def model_selection_save(expand_score_df,score_df,place_name,version,th=0.8):#�
     #ざっと学習
     rc = RandomForestClassifier(n_jobs=8, random_state=7,n_estimators=100,max_depth=10)
     rc.fit(train_x,train_y)
-    pickle_path="../../bot_database/{place_name}/model_pickle_{place_name}/model_selection_{place_name}_{V}.sav".format(place_name=place_name,V=version)#モデルを保存
+    pickle_path="../bot_database/{place_name}/model_pickle_{place_name}/model_selection_{place_name}_{V}.sav".format(place_name=place_name,V=version)#モデルを保存
     #pickle_path="check_selection.sav"
     pickle.dump(rc, open(pickle_path, "wb"))#モデルの保存
     clf=pickle.load(open(pickle_path, 'rb'))#モデルを格納読み込む
@@ -268,7 +268,7 @@ def model_selection_save(expand_score_df,score_df,place_name,version,th=0.8):#�
         com_selection_df=selection_df[selection_df['target_com']==com].copy()
         com_selection_df=com_selection_df.sort_values('pred_proba', ascending=False).iloc[:1]#各組の一番probaが高かったものを残す。
         use_model_df=pd.concat([use_model_df, com_selection_df], axis=0)
-    dir_path =  "../../bot_database/{place_name}/model_score_{place_name}/use_model/use_model_{place_name}_{V}.csv".format(place_name=place_name,V=version)#選定されたモデルのリストを出力
+    dir_path =  "../bot_database/{place_name}/model_score_{place_name}/use_model/use_model_{place_name}_{V}.csv".format(place_name=place_name,V=version)#選定されたモデルのリストを出力
     use_model_df.to_csv(dir_path, encoding='utf_8_sig')
 
 
@@ -359,8 +359,105 @@ def save_clustar_model(result_base_df,place_name,version):#クラスタリング
         clustar_train_df['num={}'.format(num_cluster)]=train_pred
         clustar_test_df['num={}'.format(num_cluster)]=test_pred
 
-def save_model_XGboost_V3_1(result_base_df,use_model_df,place_name,version):
+
+def data_making_clustar_pickle(df,place_name,version):#クラスタリングあり、モータ番号、艇番号なし,oickleのを読み込む
+    result_df=df
+    result_df=result_df.drop(["racer_1_ID","racer_2_ID","racer_3_ID","racer_4_ID","racer_5_ID","racer_6_ID",],axis=1)#IDはいらないので削除
+    result_df=result_df.replace(0.0000,{"racer_1_ave_st_time":0.22})#新人のave_st_timeを0.22に
+    result_df=result_df.replace(0.0000,{"racer_2_ave_st_time":0.22})
+    result_df=result_df.replace(0.0000,{"racer_3_ave_st_time":0.22})
+    result_df=result_df.replace(0.0000,{"racer_4_ave_st_time":0.22})
+    result_df=result_df.replace(0.0000,{"racer_5_ave_st_time":0.22})
+    result_df=result_df.replace(0.0000,{"racer_6_ave_st_time":0.22})
+    result_df=result_df.replace(0.0000,{"racer_1_doub_win":0.02})#新人の着に絡む確率ave_st_timeを0.02に(新人の半期の偏差から導出)
+    result_df=result_df.replace(0.0000,{"racer_2_doub_win":0.02})
+    result_df=result_df.replace(0.0000,{"racer_3_doub_win":0.02})
+    result_df=result_df.replace(0.0000,{"racer_4_doub_win":0.02})
+    result_df=result_df.replace(0.0000,{"racer_5_doub_win":0.02})
+    result_df=result_df.replace(0.0000,{"racer_6_doub_win":0.02})
+    #ダミー変数化
+    result_df_dummie=result_df
+    race_dummie_df=pd.get_dummies(result_df_dummie['number_race'])#number_raceをダミー化
+    for column, val in race_dummie_df.iteritems():
+        result_df_dummie['race_{}'.format(int(column))]=val
+    result_df_dummie=result_df_dummie.drop('number_race',axis=1)
+
+    cols=list(result_df_dummie.columns)
+    male_cols=[s for s in cols if 'male' in s]#性別を示すカラムを取り出す
+
+    #===========================新規、性別の取り出し機能が良くなかったため作り直す
+    empty_arr=[0]*len(result_df_dummie)
+    for col in male_cols:
+        for number in np.arange(0,2,1):
+              result_df_dummie['{}_{}'.format(col,int(number))]=empty_arr
+        male_dummie_df=pd.get_dummies(result_df_dummie[col])#性別をダミー化
+        for column, val in male_dummie_df.iteritems():
+              result_df_dummie['{}_{}'.format(col,int(column))]=val
+        result_df_dummie=result_df_dummie.drop('{}'.format(col),axis=1)
+
+    cols=list(result_df_dummie.columns)
+
+
+
+    moter_cols=[s for s in cols if '_mo' in s]#モーター番号を示すカラムを取り出す
+    boat_cols=[s for s in cols if '_bo' in s]#ボート番号を示すカラムを取り出す
+
+    #boat、moterの情報は使わない、
+    numbers=np.arange(1, 100, 1)
+    empty_arr=[0]*len(result_df_dummie)
+    for col in moter_cols:
+        result_df_dummie=result_df_dummie.drop('{}'.format(col),axis=1)
+    for col in boat_cols:
+        result_df_dummie=result_df_dummie.drop('{}'.format(col),axis=1)
+
+    #クラスタリング
+    #分けてみるクラスタの数は[3,5,7,9]の4個
+    #cluster_target_df　　trainのデータからリザルトと配当金を取り除いたもの
+    #学習データのdateを年に変換
+    result_df_dummie['date']=pd.to_datetime(result_df_dummie['date'])#日付が文字列なのでdateを日付型に変換
+    result_df_dummie['year']=result_df_dummie['date'].dt.year
+
+    #クラスタリングに邪魔だから消したいけど、後々使うものはいったんよけておく
+    result=result_df_dummie['result_com'].values#
+    money=result_df_dummie['money'].values#
+    years=result_df_dummie['year'].values#
+
+    #安全なところに移したら削除する
+    result_df_dummie=result_df_dummie.drop('result_com',axis=1)
+    result_df_dummie=result_df_dummie.drop('money',axis=1)
+    result_df_dummie=result_df_dummie.drop('date',axis=1)
+
+    #クラアスタリング用の学習、予測用のデータの切り分け
+    clustar_test_df = result_df_dummie[(result_df_dummie['year']==2019) | ((result_df_dummie['year']==2020) )].copy()#2019,2020のデータを検証用データに。
+    clustar_train_df =  result_df_dummie[(result_df_dummie['year']!=2019) & ((result_df_dummie['year']!=2020) )].copy()#そのほかを学習データに
+
+    #年の情報だけ切り分けに使ったからここで消す。
+    clustar_test_df=clustar_test_df.drop('year',axis=1)
+    clustar_train_df=clustar_train_df.drop('year',axis=1)
+
+    target_num_cluster=[3,5,7,9]#分けるクラスタ数によってモデルの名前を変える
+    for num_cluster in target_num_cluster:
+        #Km = KMeans(random_state=7,n_clusters=num_cluster).fit(clustar_train_df)#rondom_stateはラッキーセブン
+        pickle_path="../bot_database/{place_name}/model_pickle_{place_name}/clustering_{place_name}_num_{num_cluster}_{V}.sav".format(place_name=place_name,num_cluster=num_cluster,V=version)#モデルを保存
+        Km =pickle.load(open(pickle_path, 'rb'))
+        train_pred = Km.predict(clustar_train_df)#rondom_stateはラッキーセブン
+        test_pred =Km.predict(clustar_test_df)#rondom_stateはラッキーセブン
+        #Km=========================実査に使うときはこれのモデルを会場ごとに保存して使用。
+        clustar_train_df['num={}'.format(num_cluster)]=train_pred
+        clustar_test_df['num={}'.format(num_cluster)]=test_pred
+
+    #結合して元の形に戻す。
+    clustar_df=pd.concat([clustar_train_df, clustar_test_df])
+    clustar_df['year']=years
+    clustar_df['money']=money
+    clustar_df['result_com']=result
+
+    model_df=clustar_df
+    return model_df
+
+def save_model_XGboost_V3_1(result_base_df,use_model_df,years,place_name,version):
     print(place_name)
+    result_df=data_making_clustar_pickle(result_base_df,place_name,version)
     #result_dfは加工関数にて分けられたものを渡す。
     model_score_df=pd.DataFrame(columns=['target_com','depth','target_per','threshold','total_get_year1', 'total_use_year1','num_com_year1','num_pred_year1','num_hit_year1','buy_hit_per_year1','gain_year1','total_get_year2', 'total_use_year2','num_com_year2','num_pred_year2','num_hit_year2','buy_hit_per_year2','gain_year2','gain_year3'])#スコアを格納するdf
     year1=years[0]
@@ -462,7 +559,7 @@ def save_model_XGboost_V3_1(result_base_df,use_model_df,place_name,version):
         #==========================================================================================================================================
         #==========================================================================================================================================
 
-        pickle_path="../bot_database/{place_name}/model_pickle_{place_name}/com{com}_{depth}_{target_per}_{th}_{place_name}.sav".format(place_name=place_name,com=result_com,depth=depth,target_per=target_per,th=th)#モデルを保存
+        pickle_path="../bot_database/{place_name}/model_pickle_{place_name}/com{com}_{depth}_{target_per}_{th}_{place_name}_{V}.sav".format(place_name=place_name,com=result_com,depth=depth,target_per=target_per,th=th,V=version)#モデルを保存
         pickle.dump(clf, open(pickle_path, "wb"))#モデルの保存
         #その場でpickleの方を読み込んでpickleの出力の方を確認する
         bst=pickle.load(open(pickle_path, 'rb'))#組番号に対応したモデルを格納#モデルの読み込み
@@ -513,6 +610,6 @@ def save_model_XGboost_V3_1(result_base_df,use_model_df,place_name,version):
             model_score_s['buy_hit_per_year{year}'.format(year=label)]=(model_score_s['num_hit_year{year}'.format(year=label)]/ model_score_s['num_pred_year{year}'.format(year=label)])*100
         model_score_df=model_score_df.append(model_score_s,ignore_index=True,sort=False)
     #モデルの「スコアを保存
-    dir_path =  "../../bot_database/{place_name}/model_score_{place_name}/check_{place_name}_model_score_{V}.csv".format(place_name=place_name,V=version)#作成したデータの書き込み先
+    dir_path =  "../bot_database/{place_name}/model_score_{place_name}/check_{place_name}_model_score_{V}.csv".format(place_name=place_name,V=version)#作成したデータの書き込み先
     model_score_df.to_csv(dir_path, encoding='utf_8_sig')
     return None#model_selectionで決定したぱらめーたをもとにモデルを保存。
