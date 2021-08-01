@@ -18,3 +18,5 @@ trans_text_code.ipynb:HTMLの文字コードを変換するスクリプト
 making_traindata.ipynb:HTMLから情報を抜き出してCSVに保存、さらにパラメータの情報を結合してtrainのデータとして出力（databaseに出力）
 
 model_analysis.ipynb:XGboost の予測を閾値で区切ったものの中で成績がいいモデルを探し、pickleで保存、加えてもでるが正常かどうかチェックするcsvを出力するスクリプト
+
+save_model.ipynb:モデル選定用のモデル作成を行うノートブック(model_select_save.pyをもとに)。
