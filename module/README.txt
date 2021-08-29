@@ -3,5 +3,7 @@ graph.py:分析、可視化用の関数をまとめたもの
 master.py:開催会場の番号を持ったディクショナリを返す
 trans_text.py:テキストファイルの変換をおこなう関数のモジュール
 
-modeling_scores.py:モデリングをするパラメータの探索、選定モデル作成用のスコアシートの作成を行う関数集
 
+model_analysis.py:モデリングを行う（後述のmodeling_scores がversion3系列で，こっちは２系列)
+modeling_scores.py:モデリングをするパラメータの探索、選定モデル作成用のスコアシートの作成を行う関数集
+model_select_save.py: シートの値をもとにモデルの保存を行う関数集
