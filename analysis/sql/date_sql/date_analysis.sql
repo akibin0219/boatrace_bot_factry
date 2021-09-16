@@ -224,10 +224,161 @@ GROUP BY
 ;
 
 
+--初日，最終日に関する分析=========================================
+WITH get_t AS(--ここで使用するテーブルを決定する
+  SELECT
+      *
+  FROM
+     date_former.{} l
+ WHERE
+     l.range_date>3 AND l.range_date<8
+),get AS(
+  SELECT
+      l.date
+      , l.place_name
+      , l.money AS get_money
+      , l.year
+      , l.month
+      , l.day
+      , l.num_date
+      , l.range_date
+      , l.season
+  FROM
+     get_t l
+  WHERE
+      money_type='get'
+), bet AS(
+  SELECT
+      l.date
+      , l.place_name
+      , l.money AS bet_money
+      , l.year
+      , l.month
+      , l.day
+      , l.num_date
+      , l.range_date
+      , l.season
+  FROM
+     get_t l
+  WHERE
+      money_type='bet'
+), join_g_b AS(--情報の結合
+  SELECT
+      b.place_name
+      , b.year
+      , b.month
+      , get_money
+      , bet_money
+      , get_money-bet_money AS income
+      , b.day
+      , b.num_date
+      , b.range_date
+      , b.season
+      , CASE
+            WHEN b.num_date=1 THEN 'first'
+            WHEN b.num_date=b.range_date THEN 'last'
+            ELSE 'other'
+        END AS date_cate
+
+  FROM get g
+  RIGHT OUTER JOIN bet b
+      ON g.year=b.year
+      AND g.place_name=b.place_name
+      AND g.month=b.month
+      AND g.date=b.date
+)
+SELECT--場，開催日数ごとにまとめる
+    j.place_name
+    , j.date_cate
+    , SUM(j.income) AS income
+    , COUNT(*) AS num_date
+    , ROUND((CAST(COUNT(j.income>0 OR NULL) AS DEC)/COUNT(*))*100 , 3) AS num_plus_day
+    , ROUND((CAST(COUNT(j.income<0 OR NULL) AS DEC)/COUNT(*))*100 , 3) AS num_minus_day
+
+FROM
+    join_g_b j
+GROUP BY
+    j.place_name
+    , j.date_cate
+;
 
 
 
 
+
+--何番目の開催日かに関する分析=========================================
+WITH get_t AS(--ここで使用するテーブルを決定する
+  SELECT
+      *
+  FROM
+     date_former.former_bet_get_log_t_th05_all_hit2 l
+ WHERE
+     l.range_date>3 AND l.range_date<8
+),get AS(
+  SELECT
+      l.date
+      , l.place_name
+      , l.money AS get_money
+      , l.year
+      , l.month
+      , l.day
+      , l.num_date
+      , l.range_date
+      , l.season
+  FROM
+     get_t l
+  WHERE
+      money_type='get'
+), bet AS(
+  SELECT
+      l.date
+      , l.place_name
+      , l.money AS bet_money
+      , l.year
+      , l.month
+      , l.day
+      , l.num_date
+      , l.range_date
+      , l.season
+  FROM
+     get_t l
+  WHERE
+      money_type='bet'
+), join_g_b AS(--情報の結合
+  SELECT
+      b.place_name
+      , b.year
+      , b.month
+      , get_money
+      , bet_money
+      , get_money-bet_money AS income
+      , b.day
+      , b.num_date
+      , b.range_date
+      , b.season
+  FROM get g
+  RIGHT OUTER JOIN bet b
+      ON g.year=b.year
+      AND g.place_name=b.place_name
+      AND g.month=b.month
+      AND g.date=b.date
+)
+SELECT--場，開催日数ごとにまとめる
+    j.place_name
+    , j.num_date
+    , SUM(j.get_money) AS get
+    , SUM(j.bet_money) AS bet
+    , SUM(j.income) AS income
+    , COUNT(*) AS num_date
+    , ROUND((CAST(COUNT(j.income>0 OR NULL) AS DEC)/COUNT(*))*100 , 3) AS num_plus_day
+    , ROUND((CAST(COUNT(j.income<0 OR NULL) AS DEC)/COUNT(*))*100 , 3) AS num_minus_day
+
+FROM
+    join_g_b j
+GROUP BY
+    j.place_name
+    , j.num_date
+;
 
 
 
