@@ -218,31 +218,31 @@ def use_model_para(good_model_df,place_name,version):#実査に使用するの�
     return None
 
 
-# def save_model(use_model_df,place_name,version):#実査に使用するのにどのモデルが最適か判別するパラメータを作成する関数(製作中)====この関数なに??
-#     use_model_df=pd.DataFrame(columns=['target_com','depth','target_per','threshold','総収益', '投資金額','出現数','購買予測数','利益率','購買的中率','的中数','的中数_std','利益率_std','score'])
-#     print(place_name)
-#     for com in sorted(good_model_df['target_com'].value_counts().index):
-#         target_com_df=good_model_df[good_model_df['target_com']==com]
-#         #sc = StandardScaler()
-#         #sc =sc.fit(target_com_df['的中数'].values)
-#         target_com_df['的中数_std']=scipy.stats.zscore(target_com_df['的中数'].values)
-#         #target_com_df['的中数_std']=sc.transform(target_com_df['的中数'].values)
-#         target_com_df['利益率_std']=scipy.stats.zscore(target_com_df['利益率'].values)
-#
-#         #target_com_df['利益率_std']=sc.fit_transform(target_com_df['利益率'].values)
-#         target_com_df['score']=target_com_df['的中数_std']+target_com_df['利益率_std']
-#         if len(target_com_df)>=3:
-#             target_com_df=target_com_df[target_com_df['利益率_std']>0]#なるべく利益率を重視したモデル、偏差の中央以下の基準の利益率のモデルは候補に入れない。
-#             use_model_df_row=target_com_df[target_com_df['score']==target_com_df['score'].max()]
-#         elif len(target_com_df)==2:#モデルが二つしかなかった時、最良のモデルが二つできてまう。
-#             use_model_df_row=target_com_df[target_com_df['利益率']==target_com_df['利益率'].max()]#そんなときは利益率で選ぶ
-#         elif len(target_com_df)==1:#モデルが1つしかなかった時、そのまま代入
-#             use_model_df_row=target_com_df
-#         use_model_df=pd.concat([use_model_df, use_model_df_row])
-#
-#     dir_path = "../bot_database/{place_name}/model_score_{place_name}/use_model/use_model_{place_name}_{V}.csv".format(place_name=place_name,V=version)#作成したデータの書き込み先#使用するデータの読み込み
-#     use_model_df.to_csv(dir_path, encoding='utf_8_sig')
-#     return None
+def save_model(use_model_df,place_name,version):#実査に使用するのにどのモデルが最適か判別するパラメータを作成する関数(製作中)====この関数なに??
+    use_model_df=pd.DataFrame(columns=['target_com','depth','target_per','threshold','総収益', '投資金額','出現数','購買予測数','利益率','購買的中率','的中数','的中数_std','利益率_std','score'])
+    print(place_name)
+    for com in sorted(good_model_df['target_com'].value_counts().index):
+        target_com_df=good_model_df[good_model_df['target_com']==com]
+        #sc = StandardScaler()
+        #sc =sc.fit(target_com_df['的中数'].values)
+        target_com_df['的中数_std']=scipy.stats.zscore(target_com_df['的中数'].values)
+        #target_com_df['的中数_std']=sc.transform(target_com_df['的中数'].values)
+        target_com_df['利益率_std']=scipy.stats.zscore(target_com_df['利益率'].values)
+
+        #target_com_df['利益率_std']=sc.fit_transform(target_com_df['利益率'].values)
+        target_com_df['score']=target_com_df['的中数_std']+target_com_df['利益率_std']
+        if len(target_com_df)>=3:
+            target_com_df=target_com_df[target_com_df['利益率_std']>0]#なるべく利益率を重視したモデル、偏差の中央以下の基準の利益率のモデルは候補に入れない。
+            use_model_df_row=target_com_df[target_com_df['score']==target_com_df['score'].max()]
+        elif len(target_com_df)==2:#モデルが二つしかなかった時、最良のモデルが二つできてまう。
+            use_model_df_row=target_com_df[target_com_df['利益率']==target_com_df['利益率'].max()]#そんなときは利益率で選ぶ
+        elif len(target_com_df)==1:#モデルが1つしかなかった時、そのまま代入
+            use_model_df_row=target_com_df
+        use_model_df=pd.concat([use_model_df, use_model_df_row])
+
+    dir_path = "../bot_database/{place_name}/model_score_{place_name}/use_model/use_model_{place_name}_{V}.csv".format(place_name=place_name,V=version)#作成したデータの書き込み先#使用するデータの読み込み
+    use_model_df.to_csv(dir_path, encoding='utf_8_sig')
+    return None
 
 
 def ym_analysis(result_base_df,use_model_df,place_name,version,year):
