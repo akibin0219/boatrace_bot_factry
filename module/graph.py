@@ -237,3 +237,53 @@ def stack_bar(X_col, Y_cols,df,Y_name=None,rotation=90,colors=None,out_pic=False
     else:
         plt.savefig('stack_bar.png', bbox_inches='tight', transparent=True)
     return None
+
+
+def df_twin_plt(df,x_n,y1_n,y2_n):#2本軸でのグラフの描写
+    fig = plt.figure(figsize=(19,8))
+    plt.tick_params(colors='black')
+    plt.rcParams["font.size"] = 18
+    fig.set_facecolor(color='white')
+
+    x=df[x_n].values
+    y1=df[y1_n].values
+    y2=df[y2_n].values
+
+    ax1 = fig.add_subplot()
+    ax1.plot(x, y1,label=y1_n, marker="o")
+    ax1.tick_params()
+    ax2 = ax1.twinx()
+    #print(y2)
+    ax2.plot(x, y2,label=y2_n,color='red', marker="*")
+    #ax2.tick_params(colors='white')
+    ax2.tick_params()
+
+    h1, l1 = ax1.get_legend_handles_labels()
+    h2, l2 = ax2.get_legend_handles_labels()
+    ax1.legend(h1+h2, l1+l2)
+
+    #ax1.set_xlabel(x_n,color='white')
+    #ax1.set_ylabel(y1_n,color='white')
+    #ax2.set_ylabel(y2_n,color='white')
+    ax1.set_xlabel(x_n)
+    ax1.set_ylabel(y1_n)
+    ax2.set_ylabel(y2_n)
+    plt.show()
+    return None
+
+def df_hist_plt(df,target_col,num_bin=50):#2本軸でのグラフの描写
+    target_vals=df[target_col].values
+
+    #グラフの処理
+    fig = plt.figure(figsize=(19,8))
+    plt.tick_params(colors='black')
+    plt.rcParams["font.size"] = 18
+    fig.set_facecolor(color='white')
+
+    ax = fig.add_subplot()
+    ax.hist(target_vals, bins=num_bin)
+    ax.set_title(target_col)
+    ax.set_xlabel('step')
+    ax.set_ylabel('num_values')
+    plt.show()
+    return None
