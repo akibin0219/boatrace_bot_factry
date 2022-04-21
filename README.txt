@@ -11,7 +11,10 @@ modeling/  :モデリングを行うスクリプトのまとめフォルダ、�
 -modeling_{vertsion}.ipynb   バージョンごとの機能に関しては別途フォルダ内のREADMEに記述
 
 former_asiya_simulation/  :利益が出ていた時の芦屋のモデルを使って，追加で一年間購買シミュレーションを行い利益が出ていたか（たまたまじゃなかったのか）の確認を行う
--
+-former_asiya_simulation.ipynb:前の芦屋モデルの2021終了までの購買テスト．および購買金額を可変した際に改善がみられるのかのシミュレーションを行ったノートブック
+
+maintanance/   :メンテを行うためのスクリプトが入ったフォルダ(3カ月ごと)
+-/maintenance/maintenance_HTML_traindata.ipynb :レースデータに関してのメンテナンスを行うスクリプトファイル
 
 
 
