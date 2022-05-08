@@ -55,6 +55,6 @@ CREATE TABLE proba_test.result_log_former_asiya_proba_test_2022(
 
 
 /*ミスった時用のテーブル削除用のクエリ*/
--- DROP TABLE proba_test.bet_log_former_asiya_proba_test_2022;
--- DROP TABLE proba_test.bet_get_log_former_asiya_proba_test_2022;
--- DROP TABLE proba_test.result_log_former_asiya_proba_test_2022;
+DROP TABLE proba_test.bet_log_former_asiya_proba_test_2022;
+DROP TABLE proba_test.bet_get_log_former_asiya_proba_test_2022;
+DROP TABLE proba_test.result_log_former_asiya_proba_test_2022;
